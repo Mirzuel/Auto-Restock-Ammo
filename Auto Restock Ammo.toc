@@ -1,0 +1,8 @@
+﻿## Interface: 11302
+## Title: AutoRestockAmmo
+## Author: Mirzuel
+## Notes: Tries to keep vendor ammo in your bags!
+## Version: 1.1.3
+##SavedVariablesPerCharacter: AutoAmmo_Quantity
+
+Main.lua
