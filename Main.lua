@@ -38,7 +38,7 @@ frame:SetScript("OnEvent", function(self, event, ...)
     AutoAmmo_ItemToBuy();
     local i = GetMerchantNumItems();
     
-    -- Tilføj denne betingelse for at kontrollere, om vendor sælger ammunition
+    -- Add this condition to check if the vendor sells ammunition
     local vendorSellsAmmo = false
     while i > 0 do
         local merchItemID = GetMerchantItemID(i)
@@ -51,11 +51,11 @@ frame:SetScript("OnEvent", function(self, event, ...)
 
     local toBuy = AutoAmmo_Quantity - GetItemCount(ammoID)
     
-    -- Tjek om vendor sælger ammunition, før dialogen vises
+    -- Check if the vendor sells ammunition before showing the dialog
     if vendorSellsAmmo and toBuy > 0 and ammoID ~= nil then
         local dialog = AutoAmmo_ShowConfirmationDialog()
         if dialog and dialog.data then
-            i = GetMerchantNumItems(); -- Nulstil i, så vi kan iterere igen
+            i = GetMerchantNumItems(); -- Reset i so we can iterate again
             while i > 0 and toBuy > 0 and ammoID ~= nil do
                 local merchItemID = GetMerchantItemID(i)
                 if merchItemID == ammoID then
@@ -77,30 +77,42 @@ end)
 function AutoAmmo_ShowConfirmationDialog()
     local dialog = StaticPopup_Show("AUTOAMMO_CONFIRM_DIALOG")
     if dialog then
-        dialog.data = nil -- Nulstil datafeltet, så vi er sikre på, det er klart.
+        dialog.data = nil -- Reset the data field to ensure it's clear.
     end
     return dialog
 end
 
 function AutoAmmo_Command(arg1)
     AutoAmmo_ItemToBuy();
-    if arg1 == "" then
+    if arg1 == "info" then
+        AutoAmmo_ShowInfoDialog()
+    elseif arg1 == "" then
         StaticPopup_Show("AUTOAMMO_DIALOG")
-    elseif tonumber(arg1) ~= nil then
-        AutoAmmo_Quantity = tonumber(arg1)
-        if ammoID ~= nil then
-            local ammoName = select(1, GetItemInfo(ammoID))
-            if ammoName == nil then
-                ammoName = "ammo"
-            end
-            print("Stockpiling " .. AutoAmmo_Quantity .. " " .. ammoName)
-        else
-            print("Stockpiling " .. AutoAmmo_Quantity .. " ammo when you get a weapon that needs it.")
-        end
     else
-        print("Available command is /aa <number>")
+        print("Invalid command. Use '/aa' to open the dialog or '/aa info' to get information.")
     end
 end
+
+function AutoAmmo_ShowInfoDialog()
+    local ammoQuantity = tostring(AutoAmmo_Quantity)
+    local dialog = StaticPopup_Show("AUTOAMMO_INFO_DIALOG", ammoQuantity)
+    if dialog then
+        dialog.data = AutoAmmo_Quantity
+    end
+end
+
+StaticPopupDialogs["AUTOAMMO_INFO_DIALOG"] = {
+    text = "AutoAmmo is set to buy: %s ammo.",
+    button1 = "OK",
+    OnAccept = function(self)
+        self.data = nil -- Reset the data field
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
 
 SLASH_AUTOAMMO1 = "/aa"
 SLASH_AUTOAMMO2 = "/autoammo"
@@ -149,8 +161,8 @@ StaticPopupDialogs["AUTOAMMO_CONFIRM_DIALOG"] = {
     button1 = "Yes",
     button2 = "No",
     OnAccept = function(self)
-        self.data = true -- Tildel "true" til datafeltet for at indikere, at brugeren trykkede "Yes"
-        -- Resten af købslogikken skal flyttes herfra til OnAccept
+        self.data = true -- Assign "true" to the data field to indicate that the user pressed "Yes"
+        -- Move the rest of the purchase logic here from OnAccept
         local i = GetMerchantNumItems();
         local toBuy = AutoAmmo_Quantity - GetItemCount(ammoID)
         while i > 0 and toBuy > 0 and ammoID ~= nil do
@@ -169,11 +181,10 @@ StaticPopupDialogs["AUTOAMMO_CONFIRM_DIALOG"] = {
         end
     end,
     OnCancel = function(self)
-        self.data = false -- Tildel "false" til datafeltet for at indikere, at brugeren trykkede "No"
+        self.data = false -- Assign "false" to the data field to indicate that the user pressed "No"
     end,
     timeout = 0,
     whileDead = true,
     hideOnEscape = true,
     preferredIndex = 3,
 }
-
